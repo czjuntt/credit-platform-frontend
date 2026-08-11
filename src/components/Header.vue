@@ -7,14 +7,11 @@
       </div>
       <nav class="nav-menu">
         <router-link to="/" exact-active-class="active">首页</router-link>
-        <router-link to="/policies" active-class="active">普惠信贷政策</router-link>
-        <router-link to="/products" active-class="active">普惠信贷产品</router-link>
-        <router-link to="/cases" active-class="active">普惠信贷案例</router-link>
+        <router-link to="/policies" active-class="active">信贷政策</router-link>
+        <router-link to="/products" active-class="active">信贷产品</router-link>
+        <router-link to="/cases" active-class="active">信贷案例</router-link>
         <router-link to="/contacts" active-class="active">咨询电话</router-link>
       </nav>
-      <div class="header-actions">
-        <router-link to="/login" class="admin-link">管理入口</router-link>
-      </div>
     </div>
   </header>
 </template>

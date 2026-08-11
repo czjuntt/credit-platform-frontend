@@ -8,7 +8,6 @@
           <p>服务地方经济 助力小微企业 普惠金融 惠民惠企</p>
           <div class="hero-actions">
             <router-link to="/products" class="btn-primary">查看信贷产品</router-link>
-            <router-link to="/products" class="btn-secondary">了解信贷产品</router-link>
           </div>
         </div>
       </section>
@@ -28,7 +27,7 @@
                 <el-icon :size="32"><Money /></el-icon>
               </div>
               <h3>信贷产品</h3>
-              <p>多家银行产品对比</p>
+              <p>全市银行产品全览</p>
             </router-link>
             <router-link to="/products" class="quick-card">
               <div class="card-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe)">
@@ -65,7 +64,7 @@
             <div class="feature-item">
               <el-icon :size="40" color="#1890ff"><Clock /></el-icon>
               <h4>快速审批</h4>
-              <p>简化流程，最快3个工作日即可完成审批</p>
+              <p>简化流程，几个工作日即可完成审批</p>
             </div>
             <div class="feature-item">
               <el-icon :size="40" color="#52c41a"><Money /></el-icon>
@@ -74,8 +73,8 @@
             </div>
             <div class="feature-item">
               <el-icon :size="40" color="#faad14"><OfficeBuilding /></el-icon>
-              <h4>多家银行</h4>
-              <p>工商银行、建设银行、农业银行等5家银行共同参与</p>
+              <h4>银行汇集</h4>
+              <p>汇集辖内大中小各类银行</p>
             </div>
             <div class="feature-item">
               <el-icon :size="40" color="#722ed1"><User /></el-icon>

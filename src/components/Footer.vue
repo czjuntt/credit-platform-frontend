@@ -2,20 +2,19 @@
   <footer class="site-footer">
     <div class="footer-content">
       <div class="footer-section">
-        <h4>关于我们</h4>
+        <h4>快速链接</h4>
+        <router-link to="/policies">信贷政策</router-link>
+        <router-link to="/products">信贷产品</router-link>
+        <router-link to="/cases">信贷案例</router-link>
+      </div>
+      <div class="footer-section">
+        <h4>机构信息</h4>
         <p>金昌市银行业普惠金融信贷服务中心</p>
         <p>致力于为中小微企业提供便捷的金融服务</p>
       </div>
       <div class="footer-section">
-        <h4>快速链接</h4>
-        <router-link to="/policies">普惠信贷政策</router-link>
-        <router-link to="/products">普惠信贷产品</router-link>
-        <router-link to="/cases">普惠信贷案例</router-link>
-      </div>
-      <div class="footer-section">
-        <h4>联系我们</h4>
-        <p>服务热线：0935-XXXXXXX</p>
-        <p>地址：甘肃省金昌市</p>
+        <h4>管理入口</h4>
+        <router-link to="/login" class="admin-link">登录管理后台</router-link>
       </div>
     </div>
     <div class="footer-bottom">
@@ -66,6 +65,22 @@
 
     &:hover {
       color: #ffd700;
+    }
+  }
+
+  .admin-link {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 8px 16px;
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    border-radius: 6px;
+    color: #ffd700;
+    font-size: 14px;
+    transition: all 0.3s;
+
+    &:hover {
+      background: rgba(255, 215, 0, 0.15);
+      border-color: #ffd700;
     }
   }
 }
