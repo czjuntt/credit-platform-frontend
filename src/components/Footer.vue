@@ -6,19 +6,11 @@
         <router-link to="/policies">信贷政策</router-link>
         <router-link to="/products">信贷产品</router-link>
         <router-link to="/cases">信贷案例</router-link>
-      </div>
-      <div class="footer-section">
-        <h4>机构信息</h4>
-        <p>金昌市银行业普惠金融信贷服务中心</p>
-        <p>致力于为中小微企业提供便捷的金融服务</p>
-      </div>
-      <div class="footer-section">
-        <h4>管理入口</h4>
-        <router-link to="/login" class="admin-link">登录管理后台</router-link>
+        <router-link to="/login" class="admin-link">管理入口</router-link>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2026 金昌市银行业普惠金融信贷服务中心 版权所有</p>
+      <p>&copy; 2026 金昌市银行业普惠金融信贷服务中心 版权所有（开发测试中）</p>
     </div>
   </footer>
 </template>
@@ -37,9 +29,12 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.footer-content .footer-section {
+  max-width: 280px;
 }
 
 .footer-section {

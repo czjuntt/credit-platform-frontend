@@ -6,8 +6,15 @@ import { checkRateLimit, incrementRequestCount, isRateLimitExceeded } from './ra
 
 const request = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-  timeout: 10000
+  timeout: 30000
 })
+
+const MAX_RETRY = 2
+const RETRY_DELAY = 2000
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
 
 const cache = new Map()
 const CACHE_TTL = 5 * 60 * 1000
@@ -232,7 +239,18 @@ request.interceptors.response.use(
       ElMessage.warning('本月/今日请求次数已达上限，正在使用缓存数据')
       return { error: 'RATE_LIMITED', message: '请求次数已达上限' }
     }
-    
+
+    const cfg = error.config || {}
+    cfg.__retryCount = cfg.__retryCount || 0
+
+    const isTimeout = !error.response && (error.code === 'ECONNABORTED' || /timeout/i.test(error.message || ''))
+    const isServerErr = error.response?.status >= 500
+
+    if ((isTimeout || isServerErr) && cfg.method === 'get' && cfg.__retryCount < MAX_RETRY) {
+      cfg.__retryCount += 1
+      return sleep(RETRY_DELAY).then(() => request(cfg))
+    }
+
     const msg = error.response?.data?.detail
     if (error.response?.status === 401 && msg !== 'Not found' && !error.response?.data?.code) {
       localStorage.removeItem('token')
@@ -240,6 +258,8 @@ request.interceptors.response.use(
       ElMessage.error('登录已过期，请重新登录')
     } else if (error.response?.data?.detail) {
       ElMessage.error(error.response.data.detail)
+    } else if (isTimeout) {
+      ElMessage.error('服务正在启动，请稍后重试')
     } else {
       ElMessage.error('请求失败')
     }
