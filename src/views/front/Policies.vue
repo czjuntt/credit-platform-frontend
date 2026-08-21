@@ -4,8 +4,8 @@
     <main class="main-content">
       <div class="page-container">
         <div class="page-header">
-          <h1>普惠信贷政策</h1>
-          <p>了解最新普惠金融相关政策</p>
+          <h1>信贷政策</h1>
+          <p>了解最新信贷相关政策</p>
         </div>
 
         <div class="filter-bar">
@@ -14,17 +14,26 @@
           </el-select>
         </div>
 
-        <div class="content-list" v-loading="loading">
-          <div class="content-item" v-for="item in filteredItems" :key="item.id" @click="goDetail(item.id)">
-            <div class="item-header">
-              <span class="item-title">{{ item.title }}</span>
-              <span class="item-bank">{{ getBankName(item.bank_id) }}</span>
+        <div class="row-list" v-loading="loading">
+          <div
+            v-for="(item, idx) in filteredItems"
+            :key="item.id"
+            class="row-item"
+            :class="{ expanded: expandedId === item.id }"
+          >
+            <div class="row-header" @click="toggleExpand(item.id)">
+              <span class="row-num">{{ idx + 1 }}</span>
+              <span class="row-title">{{ item.title }}</span>
+              <span class="row-bank">{{ getBankName(item.bank_id) }}</span>
+              <span class="row-date">{{ item.publish_time?.split('T')[0] || '未知' }}</span>
+              <el-icon class="row-arrow" :class="{ rotated: expandedId === item.id }"><ArrowDown /></el-icon>
             </div>
-            <div class="item-preview">{{ item.content?.substring(0, 100) }}...</div>
-            <div class="item-footer">
-              <span class="item-time">{{ item.publish_time?.split('T')[0] || '未知' }}</span>
-              <el-button size="small" type="primary" link>查看详情 →</el-button>
-            </div>
+            <transition name="expand">
+              <div v-show="expandedId === item.id" class="row-body">
+                <p class="row-content">{{ item.content?.substring(0, 200) }}...</p>
+                <el-button size="small" type="primary" link @click="goDetail(item.id)">查看详情 →</el-button>
+              </div>
+            </transition>
           </div>
           <el-empty v-if="filteredItems.length === 0 && !loading" description="暂无政策信息" />
         </div>
@@ -37,6 +46,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ArrowDown } from '@element-plus/icons-vue'
 import Header from '../../components/Header.vue'
 import Footer from '../../components/Footer.vue'
 import { getPolicies, getBanks } from '../../api'
@@ -46,6 +56,7 @@ const items = ref([])
 const banks = ref([])
 const loading = ref(false)
 const selectedBank = ref(null)
+const expandedId = ref(null)
 
 const filteredItems = computed(() => {
   let data = items.value
@@ -54,6 +65,10 @@ const filteredItems = computed(() => {
   }
   return data
 })
+
+function toggleExpand(id) {
+  expandedId.value = expandedId.value === id ? null : id
+}
 
 function getBankName(bankId) {
   const bank = banks.value.find(b => b.id === bankId)
@@ -121,63 +136,92 @@ onMounted(loadData)
   justify-content: flex-end;
 }
 
-.content-list {
-  .content-item {
+.row-list {
+  .row-item {
     background: #fff;
     border-radius: 8px;
-    padding: 24px;
-    margin-bottom: 16px;
-    cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: box-shadow 0.3s;
 
-    &:hover {
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
-    }
-
-    .item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-
-      .item-title {
-        font-size: 18px;
-        font-weight: bold;
-        color: #333;
-      }
-
-      .item-bank {
-        font-size: 12px;
-        color: #1890ff;
-        background: #e6f7ff;
-        padding: 4px 10px;
-        border-radius: 12px;
-      }
-    }
-
-    .item-preview {
-      color: #666;
-      font-size: 14px;
-      line-height: 1.6;
-      margin-bottom: 12px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .item-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      .item-time {
-        color: #999;
-        font-size: 13px;
-      }
+    &.expanded {
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
     }
   }
+}
+
+.row-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  cursor: pointer;
+  gap: 12px;
+
+  .row-num {
+    font-size: 14px;
+    color: #bbb;
+    min-width: 28px;
+    text-align: right;
+    font-weight: 500;
+  }
+
+  .row-title {
+    font-size: 15px;
+    color: #333;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .row-bank {
+    font-size: 12px;
+    color: #1890ff;
+    background: #e6f7ff;
+    padding: 3px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+
+  .row-date {
+    font-size: 12px;
+    color: #aaa;
+    white-space: nowrap;
+  }
+
+  .row-arrow {
+    transition: transform 0.3s;
+    color: #ccc;
+
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.row-body {
+  padding: 0 20px 16px 56px;
+
+  .row-content {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+}
+
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+  max-height: 300px;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 </style>

@@ -4,7 +4,7 @@
     <main class="main-content">
       <div class="page-container">
         <div class="page-header">
-          <h1>普惠信贷案例</h1>
+          <h1>信贷案例</h1>
           <p>真实成功案例参考</p>
         </div>
 
@@ -14,25 +14,30 @@
           </el-select>
         </div>
 
-        <div class="case-grid" v-loading="loading">
-          <div class="case-card" v-for="item in filteredItems" :key="item.id" @click="goDetail(item.id)">
-            <div class="card-header">
-              <span class="bank-tag">{{ getBankName(item.bank_id) }}</span>
-              <span class="amount-tag">{{ item.amount }}万元</span>
+        <div class="row-list" v-loading="loading">
+          <div
+            v-for="(item, idx) in filteredItems"
+            :key="item.id"
+            class="row-item"
+            :class="{ expanded: expandedId === item.id }"
+          >
+            <div class="row-header" @click="toggleExpand(item.id)">
+              <span class="row-num">{{ idx + 1 }}</span>
+              <span class="row-bank">{{ getBankName(item.bank_id) }}</span>
+              <span class="row-title">{{ item.title }}</span>
+              <span class="row-amount" v-if="item.amount">{{ item.amount }}万元</span>
+              <el-icon class="row-arrow" :class="{ rotated: expandedId === item.id }"><ArrowDown /></el-icon>
             </div>
-            <div class="card-body">
-              <h3>{{ item.title }}</h3>
-              <div class="case-info">
-                <span class="industry" v-if="item.industry">
+            <transition name="expand">
+              <div v-show="expandedId === item.id" class="row-body">
+                <div class="case-info" v-if="item.industry">
                   <el-icon><OfficeBuilding /></el-icon>
-                  {{ item.industry }}
-                </span>
+                  <span>行业：{{ item.industry }}</span>
+                </div>
+                <p class="row-desc">{{ item.description?.substring(0, 200) }}...</p>
+                <el-button size="small" type="primary" link @click="goDetail(item.id)">查看详情 →</el-button>
               </div>
-              <p class="desc-preview">{{ item.description?.substring(0, 100) }}...</p>
-            </div>
-            <div class="card-footer">
-              <el-button size="small" type="primary" link>查看详情 →</el-button>
-            </div>
+            </transition>
           </div>
           <el-empty v-if="filteredItems.length === 0 && !loading" description="暂无案例信息" />
         </div>
@@ -45,6 +50,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ArrowDown, OfficeBuilding } from '@element-plus/icons-vue'
 import Header from '../../components/Header.vue'
 import Footer from '../../components/Footer.vue'
 import { getCases, getBanks } from '../../api'
@@ -54,6 +60,7 @@ const items = ref([])
 const banks = ref([])
 const loading = ref(false)
 const selectedBank = ref(null)
+const expandedId = ref(null)
 
 const filteredItems = computed(() => {
   let data = items.value
@@ -62,6 +69,10 @@ const filteredItems = computed(() => {
   }
   return data
 })
+
+function toggleExpand(id) {
+  expandedId.value = expandedId.value === id ? null : id
+}
 
 function getBankName(bankId) {
   const bank = banks.value.find(b => b.id === bankId)
@@ -103,7 +114,7 @@ onMounted(loadData)
 }
 
 .page-container {
-  max-width: 1100px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -129,85 +140,102 @@ onMounted(loadData)
   justify-content: flex-end;
 }
 
-.case-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+.row-list {
+  .row-item {
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: box-shadow 0.3s;
+
+    &.expanded {
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
 }
 
-.case-card {
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
+.row-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  gap: 12px;
 
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  }
-
-  .card-header {
-    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    padding: 16px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .bank-tag {
-      color: #fff;
-      font-size: 13px;
-    }
-
-    .amount-tag {
-      background: #fff;
-      color: #1890ff;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-weight: bold;
-      font-size: 14px;
-    }
-  }
-
-  .card-body {
-    padding: 20px;
-
-    h3 {
-      font-size: 18px;
-      color: #333;
-      margin-bottom: 12px;
-    }
-
-    .case-info {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 12px;
-
-      .industry {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        color: #666;
-        font-size: 13px;
-      }
-    }
-
-    .desc-preview {
-      color: #999;
-      font-size: 14px;
-      line-height: 1.6;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-  }
-
-  .card-footer {
-    padding: 12px 20px;
-    border-top: 1px solid #f0f0f0;
+  .row-num {
+    font-size: 14px;
+    color: #bbb;
+    min-width: 28px;
     text-align: right;
+    font-weight: 500;
   }
+
+  .row-bank {
+    font-size: 12px;
+    color: #1890ff;
+    background: #e6f7ff;
+    padding: 3px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+
+  .row-title {
+    font-size: 15px;
+    color: #333;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .row-amount {
+    font-size: 13px;
+    color: #f5222d;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .row-arrow {
+    transition: transform 0.3s;
+    color: #ccc;
+
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.row-body {
+  padding: 0 20px 16px 56px;
+
+  .case-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .row-desc {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+}
+
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+  max-height: 300px;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 </style>
