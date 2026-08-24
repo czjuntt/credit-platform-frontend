@@ -8,34 +8,42 @@
           <p>了解最新信贷相关政策</p>
         </div>
 
-        <div class="filter-bar">
-          <el-select v-model="selectedBank" placeholder="选择银行" clearable style="width: 200px">
-            <el-option v-for="bank in banks" :key="bank.id" :label="bank.bank_name" :value="bank.id" />
-          </el-select>
-        </div>
-
-        <div class="row-list" v-loading="loading">
+        <div class="group-list" v-loading="loading">
           <div
-            v-for="(item, idx) in filteredItems"
-            :key="item.id"
-            class="row-item"
-            :class="{ expanded: expandedId === item.id }"
+            v-for="group in groupedItems"
+            :key="group.bankId"
+            class="bank-group"
           >
-            <div class="row-header" @click="toggleExpand(item.id)">
-              <span class="row-num">{{ idx + 1 }}</span>
-              <span class="row-title">{{ item.title }}</span>
-              <span class="row-bank">{{ getBankName(item.bank_id) }}</span>
-              <span class="row-date">{{ item.publish_time?.split('T')[0] || '未知' }}</span>
-              <el-icon class="row-arrow" :class="{ rotated: expandedId === item.id }"><ArrowDown /></el-icon>
+            <div class="group-header" @click="toggleBank(group.bankId)">
+              <span class="bank-name">{{ group.bankName }}</span>
+              <span class="bank-count">{{ group.items.length }} 条</span>
+              <el-icon class="arrow" :class="{ rotated: expandedBank === group.bankId }"><ArrowDown /></el-icon>
             </div>
             <transition name="expand">
-              <div v-show="expandedId === item.id" class="row-body">
-                <p class="row-content">{{ item.content?.substring(0, 200) }}...</p>
-                <el-button size="small" type="primary" link @click="goDetail(item.id)">查看详情 →</el-button>
+              <div v-show="expandedBank === group.bankId" class="group-body">
+                <div
+                  v-for="(item, idx) in group.items"
+                  :key="item.id"
+                  class="row-item"
+                  :class="{ expanded: expandedRow === item.id }"
+                >
+                  <div class="row-header" @click="toggleRow(item.id)">
+                    <span class="row-num">{{ idx + 1 }}</span>
+                    <span class="row-title">{{ item.title }}</span>
+                    <span class="row-date">{{ item.publish_time?.split('T')[0] || '未知' }}</span>
+                    <el-icon class="row-arrow" :class="{ rotated: expandedRow === item.id }"><ArrowDown /></el-icon>
+                  </div>
+                  <transition name="expand">
+                    <div v-show="expandedRow === item.id" class="row-body">
+                      <p class="row-content">{{ item.content?.substring(0, 200) }}...</p>
+                      <el-button size="small" type="primary" link @click="goDetail(item.id)">查看详情 →</el-button>
+                    </div>
+                  </transition>
+                </div>
               </div>
             </transition>
           </div>
-          <el-empty v-if="filteredItems.length === 0 && !loading" description="暂无政策信息" />
+          <el-empty v-if="groupedItems.length === 0 && !loading" description="暂无政策信息" />
         </div>
       </div>
     </main>
@@ -55,24 +63,28 @@ const router = useRouter()
 const items = ref([])
 const banks = ref([])
 const loading = ref(false)
-const selectedBank = ref(null)
-const expandedId = ref(null)
+const expandedBank = ref(null)
+const expandedRow = ref(null)
 
-const filteredItems = computed(() => {
-  let data = items.value
-  if (selectedBank.value) {
-    data = data.filter(i => i.bank_id === selectedBank.value)
+const groupedItems = computed(() => {
+  const map = new Map()
+  for (const item of items.value) {
+    if (!map.has(item.bank_id)) {
+      const bank = banks.value.find(b => b.id === item.bank_id)
+      map.set(item.bank_id, { bankId: item.bank_id, bankName: bank?.bank_name || '未知', items: [] })
+    }
+    map.get(item.bank_id).items.push(item)
   }
-  return data
+  return Array.from(map.values())
 })
 
-function toggleExpand(id) {
-  expandedId.value = expandedId.value === id ? null : id
+function toggleBank(bankId) {
+  expandedBank.value = expandedBank.value === bankId ? null : bankId
+  expandedRow.value = null
 }
 
-function getBankName(bankId) {
-  const bank = banks.value.find(b => b.id === bankId)
-  return bank?.bank_name || '未知'
+function toggleRow(id) {
+  expandedRow.value = expandedRow.value === id ? null : id
 }
 
 function goDetail(id) {
@@ -130,23 +142,55 @@ onMounted(loadData)
   }
 }
 
-.filter-bar {
-  margin-bottom: 24px;
-  display: flex;
-  justify-content: flex-end;
+.bank-group {
+  background: #fff;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
 }
 
-.row-list {
+.group-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  gap: 12px;
+
+  .bank-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a365d;
+    flex: 1;
+  }
+
+  .bank-count {
+    font-size: 12px;
+    color: #999;
+    background: #f0f2f5;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+
+  .arrow {
+    transition: transform 0.3s;
+    color: #ccc;
+
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.group-body {
+  padding: 0 12px 8px;
+
   .row-item {
-    background: #fff;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-    transition: box-shadow 0.3s;
+    border-top: 1px solid #f5f5f5;
+    transition: background 0.2s;
 
     &.expanded {
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+      background: #fafbfc;
     }
   }
 }
@@ -154,33 +198,23 @@ onMounted(loadData)
 .row-header {
   display: flex;
   align-items: center;
-  padding: 14px 20px;
+  padding: 12px 8px;
   cursor: pointer;
-  gap: 12px;
+  gap: 10px;
 
   .row-num {
-    font-size: 14px;
+    font-size: 13px;
     color: #bbb;
-    min-width: 28px;
+    min-width: 24px;
     text-align: right;
-    font-weight: 500;
   }
 
   .row-title {
-    font-size: 15px;
+    font-size: 14px;
     color: #333;
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .row-bank {
-    font-size: 12px;
-    color: #1890ff;
-    background: #e6f7ff;
-    padding: 3px 10px;
-    border-radius: 12px;
     white-space: nowrap;
   }
 
@@ -201,27 +235,25 @@ onMounted(loadData)
 }
 
 .row-body {
-  padding: 0 20px 16px 56px;
+  padding: 4px 8px 14px 42px;
 
   .row-content {
-    font-size: 14px;
+    font-size: 13px;
     color: #666;
     line-height: 1.7;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 }
 
 .expand-enter-active,
 .expand-leave-active {
   transition: all 0.3s ease;
-  max-height: 300px;
+  max-height: 600px;
 }
 
 .expand-enter-from,
 .expand-leave-to {
   opacity: 0;
   max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
 }
 </style>
