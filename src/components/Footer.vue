@@ -10,7 +10,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2026 金昌市银行业普惠金融信贷服务中心 版权所有（开发测试中）</p>
+      <p>&copy; 2026 金昌市银行业协会普惠金融信贷服务平台 版权所有（开发测试中）</p>
     </div>
   </footer>
 </template>

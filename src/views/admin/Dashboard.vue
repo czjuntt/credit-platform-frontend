@@ -54,7 +54,7 @@
             <span class="card-title">欢迎使用</span>
           </template>
           <div class="welcome">
-            <p>欢迎使用 <strong>金昌市银行业普惠金融信贷服务中心</strong> 管理后台！</p>
+            <p>欢迎使用 <strong>金昌市银行业协会普惠金融信贷服务平台</strong> 管理后台！</p>
             <p>本系统用于管理普惠金融相关的政策、产品、流程、案例等内容。</p>
             <p class="tips">💡 使用提示：银行用户提交的内容需要审核员审核通过后才能在前台展示。</p>
           </div>

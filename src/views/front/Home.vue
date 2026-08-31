@@ -4,7 +4,7 @@
     <main class="main-content">
       <section class="hero-section">
         <div class="hero-content">
-          <h1>金昌市银行业普惠金融信贷服务中心</h1>
+          <h1>金昌市银行业协会普惠金融信贷服务平台</h1>
           <p>服务地方经济 助力小微企业 普惠金融 惠民惠企</p>
           <div class="hero-actions">
             <router-link to="/products" class="btn-primary">查看信贷产品</router-link>

@@ -2,7 +2,7 @@
   <div class="login-container">
     <div class="login-box">
       <div class="login-header">
-        <h1>金昌市银行业普惠金融信贷服务中心</h1>
+        <h1>金昌市银行业协会普惠金融信贷服务平台</h1>
         <p>管理后台登录</p>
       </div>
       <el-form :model="form" :rules="rules" ref="formRef" class="login-form">

@@ -3,7 +3,7 @@
     <div class="header-content">
       <div class="logo" @click="$router.push('/')">
         <span class="logo-icon">贷</span>
-        <span class="logo-text">金昌市银行业普惠金融信贷服务中心</span>
+        <span class="logo-text">金昌市银行业协会普惠金融信贷服务平台</span>
       </div>
       <nav class="nav-menu">
         <router-link to="/" exact-active-class="active">首页</router-link>
