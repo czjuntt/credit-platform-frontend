@@ -29,9 +29,10 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="280">
           <template #default="{ row }">
             <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button size="small" type="warning" @click="handleResetPassword(row)">重置密码</el-button>
             <el-button
               size="small"
               type="danger"
@@ -68,13 +69,29 @@
         <el-button type="primary" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="resetDialogVisible" title="重置密码" width="420px">
+      <p style="margin-bottom:16px;color:#666">为用户 <b>{{ resetForm.username }}</b> 设置新密码</p>
+      <el-form :model="resetForm" :rules="resetRules" ref="resetFormRef" label-width="80px">
+        <el-form-item label="新密码" prop="new_password">
+          <el-input v-model="resetForm.new_password" type="password" show-password placeholder="至少6位" />
+        </el-form-item>
+        <el-form-item label="确认" prop="confirm_password">
+          <el-input v-model="resetForm.confirm_password" type="password" show-password placeholder="再次输入" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="resetDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleResetSubmit">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUsers, createUser, updateUser, deleteUser, getRoles } from '../../api'
+import { getUsers, createUser, updateUser, resetUserPassword, deleteUser, getRoles } from '../../api'
 
 const users = ref([])
 const roles = ref([])
@@ -90,6 +107,26 @@ const form = ref({
   role_id: 3,
   status: 1
 })
+
+const resetDialogVisible = ref(false)
+const resetFormRef = ref(null)
+const resetForm = ref({ id: null, username: '', new_password: '', confirm_password: '' })
+const resetRules = {
+  new_password: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '至少6位', trigger: 'blur' }
+  ],
+  confirm_password: [
+    { required: true, message: '请再次输入', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== resetForm.value.new_password) callback(new Error('两次密码不一致'))
+        else callback()
+      },
+      trigger: 'blur'
+    }
+  ]
+}
 
 const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -164,6 +201,26 @@ function handleDelete(row) {
     ElMessage.success('删除成功')
     loadData()
   }).catch(() => {})
+}
+
+function handleResetPassword(row) {
+  resetForm.value = { id: row.id, username: row.username, new_password: '', confirm_password: '' }
+  resetDialogVisible.value = true
+}
+
+async function handleResetSubmit() {
+  if (!resetFormRef.value) return
+  await resetFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        await resetUserPassword(resetForm.value.id, { new_password: resetForm.value.new_password })
+        ElMessage.success('密码重置成功')
+        resetDialogVisible.value = false
+      } catch (e) {
+        console.error(e)
+      }
+    }
+  })
 }
 
 onMounted(loadData)

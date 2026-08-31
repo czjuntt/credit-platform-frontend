@@ -6,6 +6,7 @@ export const logout = () => request.post('/auth/logout')
 export const getUsers = (params) => request.get('/users', { params })
 export const createUser = (data) => request.post('/users', data)
 export const updateUser = (id, data) => request.put(`/users/${id}`, data)
+export const resetUserPassword = (id, data) => request.put(`/users/${id}/reset-password`, data)
 export const deleteUser = (id) => request.delete(`/users/${id}`)
 
 export const getRoles = () => request.get('/roles')
