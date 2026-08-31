@@ -252,7 +252,8 @@ request.interceptors.response.use(
     }
 
     const msg = error.response?.data?.detail
-    if (error.response?.status === 401 && msg !== 'Not found' && !error.response?.data?.code) {
+    const isLoginRequest = error.config?.url?.includes('/auth/login')
+    if (error.response?.status === 401 && !isLoginRequest && msg !== 'Not found' && !error.response?.data?.code) {
       localStorage.removeItem('token')
       router.push('/login')
       ElMessage.error('登录已过期，请重新登录')
