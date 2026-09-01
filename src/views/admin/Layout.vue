@@ -17,7 +17,7 @@
           <el-icon><Odometer /></el-icon>
           <template #title>首页</template>
         </el-menu-item>
-        <el-sub-menu index="user-manage">
+        <el-sub-menu v-if="isAdmin" index="user-manage">
           <template #title>
             <el-icon><User /></el-icon>
             <span>用户管理</span>
@@ -25,7 +25,7 @@
           <el-menu-item index="/admin/users">用户列表</el-menu-item>
           <el-menu-item index="/admin/roles">角色管理</el-menu-item>
         </el-sub-menu>
-        <el-menu-item index="/admin/banks">
+        <el-menu-item v-if="isAdmin" index="/admin/banks">
           <el-icon><OfficeBuilding /></el-icon>
           <template #title>银行管理</template>
         </el-menu-item>
@@ -38,7 +38,7 @@
           <el-menu-item index="/admin/products">产品管理</el-menu-item>
           <el-menu-item index="/admin/cases">案例管理</el-menu-item>
         </el-sub-menu>
-        <el-menu-item index="/admin/audit">
+        <el-menu-item v-if="isAdmin || isAuditor" index="/admin/audit">
           <el-icon><Check /></el-icon>
           <template #title>审核管理</template>
         </el-menu-item>
@@ -98,7 +98,10 @@ const collapse = ref(false)
 
 const activeMenu = computed(() => route.path)
 const currentMenu = computed(() => route.meta?.title || '')
-const userName = computed(() => localStorage.getItem('username') || '管理员')
+const userInfo = computed(() => JSON.parse(localStorage.getItem('userInfo') || '{}'))
+const isAdmin = computed(() => userInfo.value.permissions === 'all')
+const isAuditor = computed(() => (userInfo.value.permissions || '').includes('audit'))
+const userName = computed(() => userInfo.value.real_name || userInfo.value.username || '管理员')
 
 const userIcon = h(UserFilled)
 
