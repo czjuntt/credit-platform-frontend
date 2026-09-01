@@ -6,7 +6,7 @@
         <router-link to="/policies">信贷政策</router-link>
         <router-link to="/products">信贷产品</router-link>
         <router-link to="/cases">信贷案例</router-link>
-        <router-link to="/login" class="admin-link">管理入口</router-link>
+        <router-link to="/login">管理入口</router-link>
       </div>
     </div>
     <div class="footer-bottom">
@@ -60,22 +60,6 @@
 
     &:hover {
       color: #ffd700;
-    }
-  }
-
-  .admin-link {
-    display: inline-block;
-    margin-top: 4px;
-    padding: 8px 16px;
-    border: 1px solid rgba(255, 215, 0, 0.5);
-    border-radius: 6px;
-    color: #ffd700;
-    font-size: 14px;
-    transition: all 0.3s;
-
-    &:hover {
-      background: rgba(255, 215, 0, 0.15);
-      border-color: #ffd700;
     }
   }
 }
