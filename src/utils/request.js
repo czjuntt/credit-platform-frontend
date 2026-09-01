@@ -30,6 +30,7 @@ const cacheableEndpoints = [
 
 function shouldCache(url, method) {
   if (method !== 'get') return false
+  if (localStorage.getItem('token')) return false
   const path = url.split('?')[0].replace(/\/$/, '')
   return cacheableEndpoints.some(endpoint => path === endpoint || path.startsWith(endpoint + '/'))
 }
