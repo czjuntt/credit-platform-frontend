@@ -22,6 +22,9 @@
             {{ getRoleName(row.role_id) }}
           </template>
         </el-table-column>
+        <el-table-column label="所属机构" width="160">
+          <template #default="{ row }">{{ getBankName(row.bank_id) }}</template>
+        </el-table-column>
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
@@ -60,6 +63,11 @@
             <el-option v-for="role in roles" :key="role.id" :label="role.role_name" :value="role.id" />
           </el-select>
         </el-form-item>
+        <el-form-item label="所属机构" prop="bank_id" v-if="isBankRole">
+          <el-select v-model="form.bank_id" style="width: 100%" placeholder="请选择银行">
+            <el-option v-for="bank in banks" :key="bank.id" :label="bank.bank_name" :value="bank.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="状态">
           <el-switch v-model="form.status" :active-value="1" :inactive-value="0" active-text="启用" inactive-text="禁用" />
         </el-form-item>
@@ -89,12 +97,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUsers, createUser, updateUser, resetUserPassword, deleteUser, getRoles } from '../../api'
+import { getUsers, createUser, updateUser, resetUserPassword, deleteUser, getRoles, getBanks } from '../../api'
 
 const users = ref([])
 const roles = ref([])
+const banks = ref([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
@@ -105,8 +114,20 @@ const form = ref({
   password: '',
   real_name: '',
   role_id: 3,
+  bank_id: null,
   status: 1
 })
+
+const isBankRole = computed(() => {
+  const role = roles.value.find(r => r.id === form.value.role_id)
+  if (!role) return false
+  return role.permissions === 'bank' || (role.permissions && role.permissions.includes('bank'))
+})
+
+function getBankName(bankId) {
+  const bank = banks.value.find(b => b.id === bankId)
+  return bank?.bank_name || '-'
+}
 
 const resetDialogVisible = ref(false)
 const resetFormRef = ref(null)
@@ -132,7 +153,14 @@ const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
   real_name: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
-  role_id: [{ required: true, message: '请选择角色', trigger: 'change' }]
+  role_id: [{ required: true, message: '请选择角色', trigger: 'change' }],
+  bank_id: [{
+    validator: (rule, value, callback) => {
+      if (isBankRole.value && !value) callback(new Error('请选择所属机构'))
+      else callback()
+    },
+    trigger: 'change'
+  }]
 }
 
 function getRoleName(roleId) {
@@ -143,9 +171,10 @@ function getRoleName(roleId) {
 async function loadData() {
   loading.value = true
   try {
-    const [usersData, rolesData] = await Promise.all([getUsers(), getRoles()])
+    const [usersData, rolesData, banksData] = await Promise.all([getUsers(), getRoles(), getBanks()])
     users.value = usersData
     roles.value = rolesData
+    banks.value = banksData
   } finally {
     loading.value = false
   }
@@ -153,7 +182,7 @@ async function loadData() {
 
 function handleAdd() {
   isEdit.value = false
-  form.value = { username: '', password: '', real_name: '', role_id: 3, status: 1 }
+  form.value = { username: '', password: '', real_name: '', role_id: 3, bank_id: null, status: 1 }
   dialogVisible.value = true
 }
 

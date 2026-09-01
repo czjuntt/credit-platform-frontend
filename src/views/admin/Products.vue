@@ -42,7 +42,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="所属银行" prop="bank_id">
-              <el-select v-model="form.bank_id" style="width: 100%">
+              <el-select v-model="form.bank_id" style="width: 100%" :disabled="isBankUser">
                 <el-option v-for="bank in banks" :key="bank.id" :label="bank.bank_name" :value="bank.id" />
               </el-select>
             </el-form-item>
@@ -163,11 +163,18 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getProducts, createProduct, updateProduct, deleteProduct, auditProduct, getBanks, getBankContacts } from '../../api'
+import { useUserStore } from '../../stores/user'
 
+const userStore = useUserStore()
 const items = ref([])
 const banks = ref([])
 const bankContacts = ref([])
 const loading = ref(false)
+
+const isBankUser = computed(() => {
+  const perms = userStore.userInfo?.permissions || ''
+  return perms === 'bank' || perms.includes('bank')
+})
 const dialogVisible = ref(false)
 const auditVisible = ref(false)
 const isEdit = ref(false)
@@ -227,7 +234,8 @@ async function loadData() {
 function handleAdd() {
   isEdit.value = false
   form.value = {
-    name: '', bank_id: banks.value[0]?.id || null,
+    name: '',
+    bank_id: isBankUser.value ? userStore.userInfo?.bank_id : (banks.value[0]?.id || null),
     industry: '', label: [],
     summary: '', branch: '', servi_object: '', loan_limit: '',
     loan_rate: '', credit_period: '', guaranty_style: '',

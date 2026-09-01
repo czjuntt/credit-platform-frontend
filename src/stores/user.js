@@ -4,7 +4,7 @@ import { login as loginApi, logout as logoutApi, getUsers } from '../api'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')
-  const userInfo = ref(null)
+  const userInfo = ref(JSON.parse(localStorage.getItem('userInfo') || 'null'))
 
   async function login(credentials) {
     const data = await loginApi(credentials)

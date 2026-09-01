@@ -37,7 +37,7 @@
           <el-input v-model="form.title" />
         </el-form-item>
         <el-form-item label="所属银行" prop="bank_id">
-          <el-select v-model="form.bank_id" style="width: 100%">
+          <el-select v-model="form.bank_id" style="width: 100%" :disabled="isBankUser">
             <el-option v-for="bank in banks" :key="bank.id" :label="bank.bank_name" :value="bank.id" />
           </el-select>
         </el-form-item>
@@ -78,13 +78,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getCases, createCase, updateCase, deleteCase, auditCase, getBanks } from '../../api'
+import { useUserStore } from '../../stores/user'
 
+const userStore = useUserStore()
 const items = ref([])
 const banks = ref([])
 const loading = ref(false)
+
+const isBankUser = computed(() => {
+  const perms = userStore.userInfo?.permissions || ''
+  return perms === 'bank' || perms.includes('bank')
+})
 const dialogVisible = ref(false)
 const auditVisible = ref(false)
 const isEdit = ref(false)
@@ -123,7 +130,11 @@ async function loadData() {
 
 function handleAdd() {
   isEdit.value = false
-  form.value = { title: '', bank_id: banks.value[0]?.id || null, amount: 0, industry: '', description: '' }
+  form.value = {
+    title: '',
+    bank_id: isBankUser.value ? userStore.userInfo?.bank_id : (banks.value[0]?.id || null),
+    amount: 0, industry: '', description: ''
+  }
   dialogVisible.value = true
 }
 
