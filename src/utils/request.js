@@ -104,7 +104,7 @@ request.interceptors.request.use(
         
         const cacheStore = useCacheStore()
         const data = getDataFromStore(config.url)
-        if (data) {
+        if (data && (!Array.isArray(data) || data.length > 0)) {
           config.adapter = () =>
             Promise.resolve({
               data,
