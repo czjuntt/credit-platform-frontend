@@ -121,7 +121,7 @@ const form = ref({
 const isBankRole = computed(() => {
   const role = roles.value.find(r => r.id === form.value.role_id)
   if (!role) return false
-  return role.permissions === 'bank' || (role.permissions && role.permissions.includes('bank'))
+  return role.permissions === 'bank' || (role.permissions && role.permissions.includes('bank')) || role.id === 3
 })
 
 function getBankName(bankId) {

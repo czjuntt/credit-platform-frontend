@@ -173,7 +173,7 @@ const loading = ref(false)
 
 const isBankUser = computed(() => {
   const perms = userStore.userInfo?.permissions || ''
-  return perms === 'bank' || perms.includes('bank')
+  return perms === 'bank' || perms.includes('bank') || userStore.userInfo?.role_id === 3
 })
 const dialogVisible = ref(false)
 const auditVisible = ref(false)
