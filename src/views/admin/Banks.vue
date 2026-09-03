@@ -4,11 +4,12 @@
       <template #header>
         <div class="card-header">
           <span>银行管理</span>
-          <el-button type="primary" @click="handleAdd">新增银行</el-button>
+          <el-button v-if="!isBankUser" type="primary" @click="handleAdd">新增银行</el-button>
+          <span v-if="isBankUser" class="hint-text">银行用户只能管理本银行联系人</span>
         </div>
       </template>
 
-      <el-table :data="banks" v-loading="loading" stripe>
+      <el-table :data="filteredBanks" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="bank_name" label="银行名称" />
         <el-table-column prop="sort_order" label="排序" width="100" />
@@ -24,7 +25,7 @@
             <el-button size="small" link type="primary" @click="goToContacts(row)">管理联系人</el-button>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="200" v-if="!isBankUser">
           <template #default="{ row }">
             <el-button size="small" @click="handleEdit(row)">编辑</el-button>
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
@@ -57,14 +58,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getBanks, createBank, updateBank, deleteBank } from '../../api'
+import { useUserStore } from '../../stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 const banks = ref([])
 const loading = ref(false)
+
+const isBankUser = computed(() => {
+  const perms = userStore.userInfo?.permissions || ''
+  return perms === 'bank' || perms.includes('bank') || userStore.userInfo?.role_id === 3
+})
+
+const filteredBanks = computed(() => {
+  if (isBankUser.value && userStore.userInfo?.bank_id) {
+    return banks.value.filter(b => b.id === userStore.userInfo.bank_id)
+  }
+  return banks.value
+})
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const formRef = ref(null)
@@ -138,5 +153,9 @@ onMounted(loadData)
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.hint-text {
+  font-size: 13px;
+  color: #909399;
 }
 </style>

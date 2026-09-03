@@ -59,12 +59,26 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getBankContacts, createBankContact, updateBankContact, deleteBankContact, getBanks } from '../../api'
+import { useUserStore } from '../../stores/user'
 
 const route = useRoute()
-const bankId = computed(() => route.params.bankId)
+const router = useRouter()
+const userStore = useUserStore()
+
+const isBankUser = computed(() => {
+  const perms = userStore.userInfo?.permissions || ''
+  return perms === 'bank' || perms.includes('bank') || userStore.userInfo?.role_id === 3
+})
+
+const bankId = computed(() => {
+  if (isBankUser.value && userStore.userInfo?.bank_id) {
+    return String(userStore.userInfo.bank_id)
+  }
+  return route.params.bankId
+})
 const contacts = ref([])
 const bankName = ref('')
 const loading = ref(false)
@@ -86,6 +100,14 @@ const rules = {
 }
 
 async function loadData() {
+  // 银行用户如果访问非本银行的联系人页面，强制跳转
+  if (isBankUser.value && userStore.userInfo?.bank_id && route.params.bankId) {
+    const targetBankId = Number(route.params.bankId)
+    if (targetBankId !== userStore.userInfo.bank_id) {
+      router.replace(`/admin/bank-contacts/${userStore.userInfo.bank_id}`)
+      return
+    }
+  }
   loading.value = true
   try {
     const [contactsData, banks] = await Promise.all([

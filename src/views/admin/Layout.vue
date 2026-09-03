@@ -25,7 +25,7 @@
           <el-menu-item index="/admin/users">用户列表</el-menu-item>
           <el-menu-item index="/admin/roles">角色管理</el-menu-item>
         </el-sub-menu>
-        <el-menu-item v-if="isAdmin" index="/admin/banks">
+        <el-menu-item v-if="isAdmin || isBankUser" index="/admin/banks">
           <el-icon><OfficeBuilding /></el-icon>
           <template #title>银行管理</template>
         </el-menu-item>
@@ -101,6 +101,10 @@ const currentMenu = computed(() => route.meta?.title || '')
 const userInfo = computed(() => JSON.parse(localStorage.getItem('userInfo') || '{}'))
 const isAdmin = computed(() => userInfo.value.permissions === 'all')
 const isAuditor = computed(() => (userInfo.value.permissions || '').includes('audit'))
+const isBankUser = computed(() => {
+  const perms = userInfo.value.permissions || ''
+  return perms === 'bank' || perms.includes('bank') || userInfo.value.role_id === 3
+})
 const userName = computed(() => userInfo.value.real_name || userInfo.value.username || '管理员')
 
 const userIcon = h(UserFilled)
