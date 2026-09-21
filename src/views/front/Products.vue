@@ -12,30 +12,24 @@
           <div class="filter-tabs">
             <button
               class="tab-btn"
-              :class="{ active: activeTab === 'industry' }"
-              @click="activeTab = 'industry'; activeFilters = []"
+              :class="{ active: activeTab === 'all' }"
+              @click="activeTab = 'all'"
             >
-              <el-icon><OfficeBuilding /></el-icon>
-              按行业
+              全部产品
             </button>
             <button
               class="tab-btn"
-              :class="{ active: activeTab === 'label' }"
-              @click="activeTab = 'label'; activeFilters = []"
+              :class="{ active: activeTab === 'online' }"
+              @click="activeTab = 'online'"
             >
-              <el-icon><Collection /></el-icon>
-              按分类
+              线上产品
             </button>
-          </div>
-          <div class="chip-row">
             <button
-              v-for="item in currentOptions"
-              :key="item"
-              class="chip"
-              :class="{ active: activeFilters.includes(item) }"
-              @click="toggleFilter(item)"
+              class="tab-btn"
+              :class="{ active: activeTab === 'offline' }"
+              @click="activeTab = 'offline'"
             >
-              {{ item }}
+              线下产品
             </button>
           </div>
         </div>
@@ -103,7 +97,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowDown, OfficeBuilding, Collection } from '@element-plus/icons-vue'
+import { ArrowDown } from '@element-plus/icons-vue'
 import Header from '../../components/Header.vue'
 import Footer from '../../components/Footer.vue'
 import { getProducts, getBanks } from '../../api'
@@ -112,28 +106,14 @@ const router = useRouter()
 const items = ref([])
 const banks = ref([])
 const loading = ref(false)
-const activeTab = ref('industry')
-const activeFilters = ref([])
+const activeTab = ref('all')
 const expandedBank = ref(null)
 const expandedRow = ref(null)
 
-const INDUSTRY_OPTIONS = ['全行业', '小微企业', '个体工商户', '农业', '制造业', '服务业', '科技创新']
-const LABEL_OPTIONS = ['经营贷款', '三农贷款', '低息', '信用', '抵押', '保证', '快速审批', '政府贴息', '短期', '中期', '长期']
-
-const currentOptions = computed(() => {
-  return activeTab.value === 'industry' ? INDUSTRY_OPTIONS : LABEL_OPTIONS
-})
-
-function toggleFilter(item) {
-  const idx = activeFilters.value.indexOf(item)
-  if (idx >= 0) {
-    activeFilters.value.splice(idx, 1)
-  } else {
-    if (activeFilters.value.length >= 3) {
-      activeFilters.value.shift()
-    }
-    activeFilters.value.push(item)
-  }
+function isOnlineProduct(labelStr) {
+  if (!labelStr) return false
+  const labels = labelStr.split(',').map(s => s.trim()).filter(Boolean)
+  return labels.includes('线上')
 }
 
 function toggleBank(bankId) {
@@ -147,17 +127,10 @@ function toggleRow(id) {
 
 const filteredGroups = computed(() => {
   let data = items.value
-  if (activeFilters.value.length > 0) {
-    if (activeTab.value === 'industry') {
-      if (!activeFilters.value.includes('全行业')) {
-        data = data.filter(i => activeFilters.value.some(f => i.industry === f))
-      }
-    } else {
-      data = data.filter(i => {
-        const labels = parseLabels(i.label)
-        return activeFilters.value.some(f => labels.includes(f))
-      })
-    }
+  if (activeTab.value === 'online') {
+    data = data.filter(i => isOnlineProduct(i.label))
+  } else if (activeTab.value === 'offline') {
+    data = data.filter(i => !isOnlineProduct(i.label))
   }
 
   const map = new Map()
@@ -243,7 +216,6 @@ onMounted(loadData)
 .filter-tabs {
   display: flex;
   gap: 10px;
-  margin-bottom: 14px;
 
   .tab-btn {
     display: flex;
@@ -268,36 +240,6 @@ onMounted(loadData)
       color: #fff;
       border-color: #096dd9;
       box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
-    }
-  }
-}
-
-.chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-
-  .chip {
-    padding: 6px 14px;
-    border: 1px solid #e8e8e8;
-    border-radius: 16px;
-    background: #fff;
-    color: #666;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.25s;
-
-    &:hover {
-      border-color: #1890ff;
-      color: #1890ff;
-      background: #f0f8ff;
-    }
-
-    &.active {
-      background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
-      color: #fff;
-      border-color: #389e0d;
-      box-shadow: 0 2px 6px rgba(82, 196, 26, 0.3);
     }
   }
 }
