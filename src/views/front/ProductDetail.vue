@@ -60,13 +60,21 @@
               <div v-html="formattedProcess"></div>
             </div>
 
-            <div class="detail-section" v-if="contactInfo">
+            <div class="detail-section" v-if="detail.remark">
+              <h4>产品备注</h4>
+              <p>{{ detail.remark }}</p>
+            </div>
+
+            <div class="detail-section" v-if="contactsList.length">
               <h4>联系方式</h4>
               <div class="contact-info">
-                <p v-if="contactInfo.position"><strong>职务：</strong>{{ contactInfo.position }}</p>
-                <p v-if="contactInfo.phone"><strong>电话：</strong>{{ contactInfo.phone }}</p>
-                <p v-if="contactInfo.mobile"><strong>手机：</strong>{{ contactInfo.mobile }}</p>
-                <p v-if="contactInfo.email"><strong>邮箱：</strong>{{ contactInfo.email }}</p>
+                <div v-for="c in contactsList" :key="c.id" class="contact-card">
+                  <p v-if="c.name"><strong>姓名：</strong>{{ c.name }}</p>
+                  <p v-if="c.position"><strong>职务：</strong>{{ c.position }}</p>
+                  <p v-if="c.phone"><strong>电话：</strong>{{ c.phone }}</p>
+                  <p v-if="c.mobile"><strong>手机：</strong>{{ c.mobile }}</p>
+                  <p v-if="c.email"><strong>邮箱：</strong>{{ c.email }}</p>
+                </div>
               </div>
             </div>
           </template>
@@ -104,9 +112,15 @@ const hasBasicInfo = computed(() => {
   return detail.value && (detail.value.servi_object || detail.value.loan_use || detail.value.guaranty_style || detail.value.Repayment_Method)
 })
 
-const contactInfo = computed(() => {
-  if (!detail.value?.contact_id) return null
-  return bankContacts.value.find(c => c.id === detail.value.contact_id)
+const contactsList = computed(() => {
+  if (!detail.value?.contacts) return []
+  try {
+    const contactIds = typeof detail.value.contacts === 'string' ? JSON.parse(detail.value.contacts) : detail.value.contacts
+    if (!Array.isArray(contactIds)) return []
+    return contactIds.map(id => bankContacts.value.find(c => c.id === id)).filter(Boolean)
+  } catch {
+    return []
+  }
 })
 
 const formattedConditions = computed(() => {
@@ -134,7 +148,7 @@ async function loadDetail() {
     ])
     detail.value = product
     banks.value = banksData
-    if (product?.contact_id) {
+    if (product?.bank_id) {
       try {
         bankContacts.value = await getBankContacts(product.bank_id)
       } catch (e) {
@@ -279,6 +293,21 @@ onMounted(loadDetail)
 .contact-info {
   p {
     margin-bottom: 8px;
+  }
+}
+
+.contact-card {
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  p {
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+  p:last-child {
+    margin-bottom: 0;
   }
 }
 

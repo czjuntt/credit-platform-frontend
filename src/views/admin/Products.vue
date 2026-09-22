@@ -120,9 +120,17 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="联系人">
-              <el-select v-model="form.contact_id" placeholder="选择联系人" clearable style="width: 100%">
+              <el-select v-model="form.contacts" placeholder="选择联系人" multiple filterable clearable style="width: 100%">
                 <el-option v-for="c in bankContacts" :key="c.id" :label="`${c.contact_name} (${c.position || ''})`" :value="c.id" />
               </el-select>
+              <p class="hint" v-if="form.contacts.length">已选 {{ form.contacts.length }} 位联系人</p>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="备注">
+              <el-input v-model="form.remark" placeholder="产品备注信息" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -188,7 +196,7 @@ const form = ref({
   summary: '', branch: '', servi_object: '', loan_limit: '',
   loan_rate: '', credit_period: '', guaranty_style: '',
   loan_use: '', Repayment_Method: '', conditions: '',
-  process: '', contact_id: null
+  process: '', contacts: [], remark: ''
 })
 const auditForm = ref({ id: null, status: 1, audit_remark: '' })
 
@@ -240,7 +248,7 @@ function handleAdd() {
     summary: '', branch: '', servi_object: '', loan_limit: '',
     loan_rate: '', credit_period: '', guaranty_style: '',
     loan_use: '', Repayment_Method: '', conditions: '',
-    process: '', contact_id: null
+    process: '', contacts: [], remark: ''
   }
   if (form.value.bank_id) {
     loadBankContacts(form.value.bank_id)
@@ -252,7 +260,9 @@ function handleEdit(row) {
   isEdit.value = true
   form.value = {
     ...row,
-    label: row.label ? row.label.split(',').map(s => s.trim()).filter(Boolean) : []
+    label: row.label ? row.label.split(',').map(s => s.trim()).filter(Boolean) : [],
+    contacts: row.contacts ? (typeof row.contacts === 'string' ? JSON.parse(row.contacts) : row.contacts) : [],
+    remark: row.remark || ''
   }
   loadBankContacts(row.bank_id)
   dialogVisible.value = true
@@ -270,7 +280,8 @@ async function handleSubmit() {
       try {
         const payload = {
           ...form.value,
-          label: Array.isArray(form.value.label) ? form.value.label.join(',') : form.value.label
+          label: Array.isArray(form.value.label) ? form.value.label.join(',') : form.value.label,
+          contacts: JSON.stringify(form.value.contacts)
         }
         if (isEdit.value) {
           await updateProduct(form.value.id, payload)
