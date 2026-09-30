@@ -43,11 +43,11 @@
               <p>{{ detail.summary }}</p>
             </div>
 
-            <el-descriptions :column="2" border v-if="hasBasicInfo" class="info-table">
+            <el-descriptions :column="1" border v-if="hasBasicInfo" class="info-table">
               <el-descriptions-item label="服务对象" v-if="detail.servi_object">{{ detail.servi_object }}</el-descriptions-item>
               <el-descriptions-item label="贷款用途" v-if="detail.loan_use">{{ detail.loan_use }}</el-descriptions-item>
               <el-descriptions-item label="担保方式" v-if="detail.guaranty_style">{{ detail.guaranty_style }}</el-descriptions-item>
-              <el-descriptions-item label="还款方式" v-if="detail.Repayment_Method">{{ detail.Repayment_Method }}</el-descriptions-item>
+              <el-descriptions-item label="还款方式" v-if="repaymentMethod">{{ repaymentMethod }}</el-descriptions-item>
             </el-descriptions>
 
             <div class="detail-section" v-if="detail.conditions">
@@ -66,14 +66,26 @@
             </div>
 
             <div class="detail-section" v-if="contactsList.length">
-              <h4>联系方式</h4>
-              <div class="contact-info">
+              <h4>联系人</h4>
+              <div class="contact-list">
                 <div v-for="c in contactsList" :key="c.id" class="contact-card">
-                  <p v-if="c.name"><strong>姓名：</strong>{{ c.name }}</p>
-                  <p v-if="c.position"><strong>职务：</strong>{{ c.position }}</p>
-                  <p v-if="c.phone"><strong>电话：</strong>{{ c.phone }}</p>
-                  <p v-if="c.mobile"><strong>手机：</strong>{{ c.mobile }}</p>
-                  <p v-if="c.email"><strong>邮箱：</strong>{{ c.email }}</p>
+                  <div class="contact-line" v-if="contactName(c)">
+                    <span class="c-label">姓名</span>
+                    <span class="c-value">{{ contactName(c) }}</span>
+                  </div>
+                  <div class="contact-line" v-if="c.position">
+                    <span class="c-label">部门职务</span>
+                    <span class="c-value">{{ c.position }}</span>
+                  </div>
+                  <div class="contact-line" v-if="contactPhones(c).length">
+                    <span class="c-label">联系电话</span>
+                    <span class="c-value">
+                      <template v-for="(p, i) in contactPhones(c)" :key="p">
+                        <span v-if="i > 0" class="phone-sep">、</span>
+                        <a class="tel-link" :href="telHref(p)">{{ p }}</a>
+                      </template>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -108,20 +120,60 @@ function goBack() {
   }
 }
 
-const hasBasicInfo = computed(() => {
-  return detail.value && (detail.value.servi_object || detail.value.loan_use || detail.value.guaranty_style || detail.value.Repayment_Method)
+const repaymentMethod = computed(() => {
+  return detail.value?.Repayment_Method || detail.value?.repayment_method || ''
 })
 
-const contactsList = computed(() => {
-  if (!detail.value?.contacts) return []
-  try {
-    const contactIds = typeof detail.value.contacts === 'string' ? JSON.parse(detail.value.contacts) : detail.value.contacts
-    if (!Array.isArray(contactIds)) return []
-    return contactIds.map(id => bankContacts.value.find(c => c.id === id)).filter(Boolean)
-  } catch {
-    return []
-  }
+const hasBasicInfo = computed(() => {
+  return detail.value && (detail.value.servi_object || detail.value.loan_use || detail.value.guaranty_style || repaymentMethod.value)
 })
+
+function parseContactIds(raw) {
+  if (raw === null || raw === undefined) return []
+  if (Array.isArray(raw)) {
+    return raw.map(Number).filter(n => Number.isFinite(n) && n > 0)
+  }
+  const str = String(raw).trim()
+  if (!str) return []
+  try {
+    const parsed = JSON.parse(str)
+    if (Array.isArray(parsed)) {
+      return parsed.map(Number).filter(n => Number.isFinite(n) && n > 0)
+    }
+    if (parsed !== null && parsed !== undefined) {
+      const n = Number(parsed)
+      return Number.isFinite(n) && n > 0 ? [n] : []
+    }
+  } catch {
+    // 非 JSON，按分隔符解析
+  }
+  return str
+    .split(/[,，;；\s]+/)
+    .map(t => Number(t.trim()))
+    .filter(n => Number.isFinite(n) && n > 0)
+}
+
+const contactsList = computed(() => {
+  if (!detail.value) return []
+  let ids = parseContactIds(detail.value.contacts)
+  if (!ids.length) ids = parseContactIds(detail.value.contact_id)
+  if (!ids.length) return []
+  return ids.map(id => bankContacts.value.find(c => c.id === id)).filter(Boolean)
+})
+
+function contactName(c) {
+  return c.contact_name || c.name || ''
+}
+
+function contactPhones(c) {
+  return [c.phone, c.mobile]
+    .filter((v, i, arr) => v && arr.indexOf(v) === i)
+    .map(v => String(v))
+}
+
+function telHref(phone) {
+  return 'tel:' + phone.replace(/\s+/g, '')
+}
 
 const formattedConditions = computed(() => {
   if (!detail.value?.conditions) return ''
@@ -270,6 +322,23 @@ onMounted(loadDetail)
 
 .info-table {
   margin-bottom: 24px;
+
+  :deep(.el-descriptions__body) {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  :deep(.el-descriptions__label) {
+    width: 96px;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  :deep(.el-descriptions__content) {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    vertical-align: middle;
+  }
 }
 
 .detail-section {
@@ -290,24 +359,57 @@ onMounted(loadDetail)
   }
 }
 
-.contact-info {
-  p {
-    margin-bottom: 8px;
-  }
+.contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .contact-card {
-  padding: 12px 16px;
-  margin-bottom: 12px;
+  padding: 14px 16px;
   background: #fafafa;
   border-radius: 8px;
   border: 1px solid #f0f0f0;
-  p {
-    margin-bottom: 6px;
+
+  .contact-line {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
     font-size: 14px;
+    line-height: 1.9;
+    margin-bottom: 4px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
-  p:last-child {
-    margin-bottom: 0;
+
+  .c-label {
+    flex: none;
+    width: 64px;
+    color: #999;
+    font-size: 13px;
+  }
+
+  .c-value {
+    flex: 1;
+    min-width: 0;
+    color: #333;
+    word-break: break-word;
+  }
+
+  .tel-link {
+    color: #1890ff;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .phone-sep {
+    color: #bbb;
+    margin-right: 4px;
   }
 }
 
@@ -315,6 +417,16 @@ onMounted(loadDetail)
   .product-highlight {
     flex-direction: column;
     gap: 20px;
+  }
+
+  .info-table {
+    :deep(.el-descriptions__body .el-descriptions__table .el-descriptions__cell) {
+      padding: 8px;
+    }
+
+    :deep(.el-descriptions__label) {
+      width: 80px;
+    }
   }
 }
 </style>

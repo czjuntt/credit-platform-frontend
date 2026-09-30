@@ -51,37 +51,10 @@
                   v-for="(item, idx) in group.items"
                   :key="item.id"
                   class="row-item"
-                  :class="{ expanded: expandedRow === item.id }"
+                  @click="goDetail(item.id)"
                 >
-                  <div class="row-header" @click="toggleRow(item.id)">
-                    <span class="row-num">{{ idx + 1 }}</span>
-                    <span class="row-title">{{ item.name }}</span>
-                    <el-tag size="small" type="warning" effect="plain" v-if="item.loan_rate">{{ item.loan_rate }}</el-tag>
-                    <el-icon class="row-arrow" :class="{ rotated: expandedRow === item.id }"><ArrowDown /></el-icon>
-                  </div>
-                  <transition name="expand">
-                    <div v-show="expandedRow === item.id" class="row-body">
-                      <div class="info-grid">
-                        <div class="info-cell" v-if="item.loan_limit">
-                          <span class="label">额度</span>
-                          <span class="value">{{ item.loan_limit }}</span>
-                        </div>
-                        <div class="info-cell" v-if="item.credit_period">
-                          <span class="label">期限</span>
-                          <span class="value">{{ item.credit_period }}</span>
-                        </div>
-                        <div class="info-cell" v-if="item.guaranty_style">
-                          <span class="label">担保</span>
-                          <span class="value">{{ item.guaranty_style }}</span>
-                        </div>
-                      </div>
-                      <div class="label-tags" v-if="parseLabels(item.label).length">
-                        <el-tag size="small" v-for="tag in parseLabels(item.label)" :key="tag" effect="light" round>{{ tag }}</el-tag>
-                      </div>
-                      <p class="row-summary" v-if="item.summary">{{ item.summary }}</p>
-                      <el-button size="small" type="primary" link @click="goDetail(item.id)">查看详情 →</el-button>
-                    </div>
-                  </transition>
+                  <span class="row-num">{{ idx + 1 }}</span>
+                  <span class="row-title">{{ item.name }}</span>
                 </div>
               </div>
             </transition>
@@ -108,7 +81,6 @@ const banks = ref([])
 const loading = ref(false)
 const activeTab = ref('all')
 const expandedBank = ref(null)
-const expandedRow = ref(null)
 
 function isOnlineProduct(labelStr) {
   if (!labelStr) return false
@@ -118,11 +90,6 @@ function isOnlineProduct(labelStr) {
 
 function toggleBank(bankId) {
   expandedBank.value = expandedBank.value === bankId ? null : bankId
-  expandedRow.value = null
-}
-
-function toggleRow(id) {
-  expandedRow.value = expandedRow.value === id ? null : id
 }
 
 const filteredGroups = computed(() => {
@@ -141,13 +108,8 @@ const filteredGroups = computed(() => {
     }
     map.get(item.bank_id).items.push(item)
   }
-  return Array.from(map.values())
+  return Array.from(map.values()).sort((a, b) => (a.bankId || 0) - (b.bankId || 0))
 })
-
-function parseLabels(labelStr) {
-  if (!labelStr) return []
-  return labelStr.split(',').map(s => s.trim()).filter(Boolean)
-}
 
 function goDetail(id) {
   router.push(`/products/${id}`)
@@ -288,87 +250,38 @@ onMounted(loadData)
   padding: 0 12px 8px;
 
   .row-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 8px;
     border-top: 1px solid #f5f5f5;
+    gap: 10px;
+    cursor: pointer;
+    border-radius: 6px;
     transition: background 0.2s;
 
-    &.expanded {
-      background: #fafbfc;
-    }
-  }
-}
-
-.row-header {
-  display: flex;
-  align-items: center;
-  padding: 12px 8px;
-  cursor: pointer;
-  gap: 10px;
-
-  .row-num {
-    font-size: 13px;
-    color: #bbb;
-    min-width: 24px;
-    text-align: right;
-  }
-
-  .row-title {
-    font-size: 14px;
-    color: #333;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .row-arrow {
-    transition: transform 0.3s;
-    color: #ccc;
-
-    &.rotated {
-      transform: rotate(180deg);
-    }
-  }
-}
-
-.row-body {
-  padding: 4px 8px 14px 42px;
-
-  .info-grid {
-    display: flex;
-    gap: 24px;
-    flex-wrap: wrap;
-    margin-bottom: 10px;
-  }
-
-  .info-cell {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-
-    .label {
-      font-size: 12px;
-      color: #aaa;
+    &:hover {
+      background: #f5f9ff;
     }
 
-    .value {
+    .row-num {
+      font-size: 13px;
+      color: #bbb;
+      min-width: 24px;
+      text-align: right;
+    }
+
+    .row-title {
       font-size: 14px;
       color: #333;
-      font-weight: 500;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-  }
 
-  .label-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 10px;
-  }
-
-  .row-summary {
-    font-size: 13px;
-    color: #666;
-    line-height: 1.6;
-    margin-bottom: 10px;
+    &:hover .row-title {
+      color: #1890ff;
+    }
   }
 }
 
@@ -399,7 +312,7 @@ onMounted(loadData)
     padding: 14px 16px;
   }
 
-  .row-header {
+  .row-item {
     padding: 10px 4px;
     gap: 6px;
   }

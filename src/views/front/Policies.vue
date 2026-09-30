@@ -75,7 +75,7 @@ const groupedItems = computed(() => {
     }
     map.get(item.bank_id).items.push(item)
   }
-  return Array.from(map.values())
+  return Array.from(map.values()).sort((a, b) => (a.bankId || 0) - (b.bankId || 0))
 })
 
 function toggleBank(bankId) {
